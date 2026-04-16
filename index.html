@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Data-Track Prototype | АЭМЗ</title>
+    <style>
+        body { background: #1e1e1e; color: #fff; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; }
+        canvas { background: #000; border: 2px solid #444; margin-top: 20px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .info { margin-top: 15px; text-align: center; color: #aaa; }
+    </style>
+</head>
+<body>
+    <h2>Прототип системы визуализации «Дата-Трек»</h2>
+    <canvas id="trackCanvas" width="800" height="400"></canvas>
+    <div class="info">Моделирование потока данных (60 FPS) <br> Отрисовка: HTML5 Canvas + RequestAnimationFrame</div>
+
+    <script>
+        const canvas = document.getElementById('trackCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let x = 0; // Позиция заготовки
+        let tempHistory = []; // Массив для графика
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // 1. Рисую конвейер (линия)
+            ctx.strokeStyle = '#444';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(50, 150);
+            ctx.lineTo(750, 150);
+            ctx.stroke();
+
+            // 2. Логика движения заготовки
+            x += 2;
+            if (x > 700) x = 0;
+
+            // Моделирую температуру (математика: база 800 градусов + шум)
+            let currentTemp = 800 + Math.sin(x * 0.05) * 50 + (Math.random() * 10);
+            tempHistory.push(currentTemp);
+            if (tempHistory.length > 200) tempHistory.shift();
+
+            // 3. Рисую заготовку (раскаленный металл)
+            ctx.fillStyle = `rgb(255, ${Math.floor(255 - (currentTemp-700)*2)}, 0)`;
+            ctx.fillRect(50 + x, 130, 60, 20);
+            
+            // Текст над заготовкой
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Arial';
+            ctx.fillText(`${currentTemp.toFixed(1)}°C`, 55 + x, 120);
+
+            // 4. Рисую график температуры (внизу)
+            ctx.strokeStyle = '#ff4500';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            tempHistory.forEach((t, i) => {
+                let gx = 50 + (i * 3.5);
+                let gy = 350 - (t - 700);
+                if (i === 0) ctx.moveTo(gx, gy);
+                else ctx.lineTo(gx, gy);
+            });
+            ctx.stroke();
+
+            // Сетка графика
+            ctx.strokeStyle = '#222';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(50, 250, 700, 120);
+            ctx.fillText("График температуры (Real-time)", 50, 240);
+
+            requestAnimationFrame(draw);
+        }
+
+        draw();
+    </script>
+</body>
+</html>
